@@ -39,13 +39,16 @@ if __name__ == '__main__':
             conf[arg] = None
 
     if args.verbose:
+        conf['verbose'] = True
         print("Verbose mode on.")
+    else:
+        conf['verbose'] = False
 
     # Get Creds and stuff
     if conf['host'] is None:
         print("Please input the database host (defaults to UNIX socket if empty)")
         conf['host'] = input('> ')
-    elif args.verbose:
+    elif conf['verbose']:
         print("Host already passed as {0}".format(args.host))
 
     if conf['port'] is None:
@@ -53,7 +56,7 @@ if __name__ == '__main__':
         conf['port'] = input('> ')
         if conf['port'].strip() == "":
             conf['port'] = 5432
-    elif args.verbose:
+    elif conf['verbose']:
         print("Port already passed as {0}".format(args.port))
 
     if conf['dbname'] is None:
@@ -61,7 +64,7 @@ if __name__ == '__main__':
         conf['dbname'] = input('> ')
         if conf['dbname'].strip() == "":
             conf['dbname'] = 'Database1'
-    elif args.verbose:
+    elif conf['verbose']:
         print("dbname already passed as {0}".format(args.dbname))
 
     if conf['user'] is None:
@@ -69,27 +72,27 @@ if __name__ == '__main__':
         conf['user'] = input('> ')
         if conf['user'].strip() == "":
             conf['user'] = getpass.getuser()
-    elif args.verbose:
+    elif conf['verbose']:
         print("User already passed as {0}".format(args.user))
 
     if conf['password'] is None:
         print(
             "Please input the password to authenticate with (your input will not be echoed)")
         conf['password'] = getpass.getpass('$ ')
-    elif args.verbose:
+    elif conf['verbose']:
         print("Password already passed as {0}".format(args.password))
 
-    if args.verbose:
+    if conf['verbose']:
         print("conf: ", conf)
 
     # Make connection from creds
     conn = connection.Connection(**conf)
-    if args.verbose:
+    if conf['verbose']:
         print("Connection object created")
 
     # Establish connection to db
     conn.connect()
-    if args.verbose:
+    if conf['verbose']:
         print("Connection established")
 
     # Select schema
@@ -98,7 +101,7 @@ if __name__ == '__main__':
         print("(If an approprate schema does not exist input \'N/A\')")
         print(conn.list_schemas())
         conf['schema'] = input('> ').strip()
-    elif args.verbose:
+    elif conf['verbose']:
         print("Schema already passed as {0}".format(args.schema))
 
     if conf['schema'] != 'N/A':
