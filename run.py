@@ -4,7 +4,7 @@ import argparse
 import getpass
 import psycopg2.sql as sql
 
-from src import connection
+from src import connection, menu
 
 if __name__ == '__main__':
 
@@ -125,6 +125,8 @@ if __name__ == '__main__':
     elif args.verbose:
         print("Schema already passed as {0}".format(args.schema))
 
+    # If the schema does not exist, prompt for name
+
     new_schema = False
 
     if conf['schema'] == 'N/A':
@@ -142,11 +144,18 @@ if __name__ == '__main__':
             print("Schema does not exist!")
             exit(1)
 
+    # If the schema is new, generate structure from SCHEMA.sql in cwd
+
     if new_schema:
         # TODO: Create Tables and stuff
         f = open("SCHEMA.sql")
         conn.execute(sql.SQL(f.read()).format(
             schema=sql.Identifier(conf['schema'].strip().lower())))
         conn.commit()
-    else:
-        pass
+    
+    # Keep showing menu until program close
+
+    loop = True
+
+    while(loop):
+        loop = menu(conf, conn)

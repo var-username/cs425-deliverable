@@ -38,7 +38,7 @@ class Connection(object):
         self.execute(query)
 
     def create_schema(self, schema: str, group: str):
-        command = "CREATE SCHEMA {0} "
+        command = "CREATE SCHEMA IF NOT EXISTS {0} "
         if group is not None:
             command += "AUTHORIZATION {1}"
         self.execute(command.format(schema, group))
