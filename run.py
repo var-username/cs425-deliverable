@@ -1,8 +1,8 @@
 #!/bin/env/python3
 
 import argparse
-import os
 import getpass
+import psycopg2.sql as sql
 
 from src import connection
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         patient_existed = False
 
     # Select schema
-    
+
     if conf['schema'] is None:
         print("\nPlease select your schema.\n\nAvailable schemas:")
         print("(If an approprate schema does not exist input \'N/A\')")
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     if conf['schema'] == 'N/A':
         # If schema input is 'N/A', create a new schema
         print("What should the schema be called?")
-        conf['schema'] = input('> ').strip()
+        conf['schema'] = input('> ').strip().lower()
         new_schema = True
         conn.create_schema(conf['schema'], "admin")
         conn.commit()
@@ -144,8 +144,9 @@ if __name__ == '__main__':
 
     if new_schema:
         # TODO: Create Tables and stuff
-        # NOTE: Maybe we can do batch CREATE queries here, and do the
-        #       ALTER queries in the else block?
-        pass
+        f = open("SCHEMA.sql")
+        conn.execute(sql.SQL(f.read()).format(
+            schema=sql.Identifier(conf['schema'].strip().lower())))
+        conn.commit()
     else:
         pass
