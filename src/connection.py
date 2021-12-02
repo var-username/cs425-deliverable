@@ -41,7 +41,7 @@ class Connection(object):
         command = "CREATE SCHEMA IF NOT EXISTS {0} "
         if group is not None:
             command += "AUTHORIZATION {1}"
-        self.execute(command.format(schema, group))
+        self.execute(sql.SQL(command).format(sql.Identifier(schema), sql.Identifier(group)))
 
     def create_table(self, schema: str, table: str, *columns: list[(str, str, str)], constraints: list[(str, str)]):
         # TODO
