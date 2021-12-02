@@ -11,6 +11,7 @@ if __name__ == '__main__':
     conf = dict()
 
     # === Arguments ===
+
     argparser = argparse.ArgumentParser(description='CS425')
 
     #argparser.add_argument('-n', '--no-ncurses', action="store_false", help='disables the ncurses tui')
@@ -42,6 +43,7 @@ if __name__ == '__main__':
         print("Verbose mode on.")
 
     # Get Creds and stuff
+
     if conf['host'] is None:
         print("Please input the database host (defaults to UNIX socket if empty)")
         conf['host'] = input('> ')
@@ -83,16 +85,38 @@ if __name__ == '__main__':
         print("conf: ", conf)
 
     # Make connection from creds
+
     conn = connection.Connection(**conf)
     if args.verbose:
         print("Connection object created")
 
     # Establish connection to db
+
     conn.connect()
     if args.verbose:
         print("Connection established")
 
+    # Check if admin, doctor, and patient exist
+    # Create them if they don't
+
+    admin_existed = True
+    doctor_existed = True
+    patient_existed = True
+
+    if not conn.does_role_exist('admin'):
+        conn.create_role('admin', ['CREATEROLE'])
+        admin_existed = False
+
+    if not conn.does_role_exist('doctor'):
+        conn.create_role('doctor', [])
+        doctor_existed = False
+
+    if not conn.does_role_exist('patient'):
+        conn.create_role('patient', [])
+        patient_existed = False
+
     # Select schema
+    
     if conf['schema'] is None:
         print("\nPlease select your schema.\n\nAvailable schemas:")
         print("(If an approprate schema does not exist input \'N/A\')")
@@ -101,13 +125,27 @@ if __name__ == '__main__':
     elif args.verbose:
         print("Schema already passed as {0}".format(args.schema))
 
-    if conf['schema'] != 'N/A':
+    new_schema = False
+
+    if conf['schema'] == 'N/A':
+        # If schema input is 'N/A', create a new schema
+        print("What should the schema be called?")
+        conf['schema'] = input('> ').strip()
+        new_schema = True
+        conn.create_schema(conf['schema'], "admin")
+        conn.commit()
+    else:
         if conn.does_schema_exist(conf['schema']):
             print("\nAvailable tables:")
             print(conn.list_tables_in_schema(conf['schema']))
         else:
             print("Schema does not exist!")
+            exit(1)
+
+    if new_schema:
+        # TODO: Create Tables and stuff
+        # NOTE: Maybe we can do batch CREATE queries here, and do the
+        #       ALTER queries in the else block?
+        pass
     else:
-        print("What should the schema be called?")
-        conf['schema'] = input('> ').strip()
-        conn.create_schema(conf['schema'], "admin")
+        pass
