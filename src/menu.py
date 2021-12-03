@@ -1,3 +1,5 @@
+import datetime
+
 import psycopg2.errors as p2err
 import psycopg2.sql as sql
 
@@ -49,10 +51,10 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
 
                 elif command[1].startswith('u'):
                     if (command[2].startswith('?') or len(command) < 4):
-                       print("Usage: c u [username] [group] (args)")
+                        print("Usage: c u [username] [group] (args)")
                     else:
-                       conn.create_user(*command[2:])
-                       conn.commit()
+                        conn.create_user(*command[2:])
+                        conn.commit()
 
             # Add new item
             # > a [?, d, o, p]
@@ -77,7 +79,35 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
             # > I
             elif command[0].startswith('I'):
                 raise NotImplementedError
-            
+
+            # Search
+            # > s
+            elif command[0].startswith('s'):
+                searched = False
+                if (command[1].startswith('?') or len(command) < 4):
+                    print("Usage: s [b, o] [type] [region]")
+
+                elif command[1].startswith('b'):
+                    if (command[2].startswith('?') or len(command) < 4):
+                        print("Usage: s b [bloodtype] [region]")
+                    else:
+                        targetdate = datetime.date.today() - datetime.timedelta(days = 30)
+                        query = sql.SQL("SELECT donorid, donorname FROM {table} WHERE bloodtype = {bloodtype} and organname = 'blood' and lastdonation >= {curdate} and region = {region}").format(
+                            table=sql.Identifier(conf['schema'], 'donor'), bloodtype=sql.Literal(command[2]), region=sql.Literal(command[3]), curdate=sql.Literal(targetdate.isoformat()))
+                        conn.execute(query)
+                        searched = True
+                elif command[1].startswith('o'):
+                    if (command[1].startswith('?') or len(command) < 4):
+                        print("Usage: s o [organname] [region]")
+                    else:
+                        searched = True
+                        pass
+
+                if searched:
+                    print("Patients: (id, name)")
+                    for record in conn._cur:
+                        print(record)
+
         # NOTE: pylance claims this isn't allowed but it seems to work when I run it
         except p2err.InsufficientPrivilege as e:
             print(e.pgerror)
