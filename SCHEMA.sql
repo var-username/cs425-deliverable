@@ -21,7 +21,6 @@ CREATE INDEX hospital_region_idx ON {schema}."Hospital" USING btree (region);
 
 ALTER TABLE {schema}."Hospital" OWNER TO postgres;
 GRANT ALL ON TABLE {schema}."Hospital" TO postgres;
-GRANT ALL ON TABLE {schema}."Hospital" TO admin;
 
 
 -- {schema}.doctor definition
@@ -40,7 +39,6 @@ CREATE INDEX doctor_specialization_idx ON {schema}.doctor USING btree (specializ
 
 ALTER TABLE {schema}.doctor OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.doctor TO postgres;
-GRANT ALL ON TABLE {schema}.doctor TO admin;
 
 
 -- {schema}.donor definition
@@ -71,8 +69,6 @@ CREATE INDEX donor_organname_idx ON {schema}.donor USING btree (organname);
 
 ALTER TABLE {schema}.donor OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.donor TO postgres;
-GRANT INSERT, SELECT, UPDATE ON TABLE {schema}.donor TO doctor;
-GRANT ALL ON TABLE {schema}.donor TO admin;
 
 
 -- {schema}.patient definition
@@ -93,8 +89,6 @@ CREATE INDEX patient_patientname_idx ON {schema}.patient USING btree (patientnam
 
 ALTER TABLE {schema}.patient OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.patient TO postgres;
-GRANT INSERT, SELECT, UPDATE ON TABLE {schema}.patient TO doctor;
-GRANT ALL ON TABLE {schema}.patient TO admin;
 
 
 -- {schema}.affiliated definition
@@ -111,7 +105,6 @@ CREATE TABLE {schema}.affiliated (
 
 ALTER TABLE {schema}.affiliated OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.affiliated TO postgres;
-GRANT ALL ON TABLE {schema}.affiliated TO admin;
 
 
 -- {schema}.donates definition
@@ -128,7 +121,6 @@ CREATE TABLE {schema}.donates (
 
 ALTER TABLE {schema}.donates OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.donates TO postgres;
-GRANT ALL ON TABLE {schema}.donates TO admin;
 
 
 -- {schema}.operated definition
@@ -147,7 +139,6 @@ CREATE TABLE {schema}.operated (
 
 ALTER TABLE {schema}.operated OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.operated TO postgres;
-GRANT ALL ON TABLE {schema}.operated TO admin;
 
 
 -- {schema}.organ definition
@@ -173,8 +164,6 @@ CREATE INDEX organ_organname_idx ON {schema}.organ USING btree (organname);
 
 ALTER TABLE {schema}.organ OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.organ TO postgres;
-GRANT INSERT, SELECT, UPDATE ON TABLE {schema}.organ TO doctor;
-GRANT ALL ON TABLE {schema}.organ TO admin;
 
 
 -- {schema}.patient_needs definition
@@ -189,8 +178,6 @@ CREATE TABLE {schema}.patient_needs (
 -- Permissions
 
 ALTER TABLE {schema}.patient_needs OWNER TO postgres;
-GRANT ALL ON TABLE {schema}.patient_needs TO postgres;
-GRANT ALL ON TABLE {schema}.patient_needs TO admin;
 
 
 -- {schema}.treated definition
@@ -206,9 +193,6 @@ CREATE TABLE {schema}.treated (
 -- Permissions
 
 ALTER TABLE {schema}.treated OWNER TO postgres;
-GRANT ALL ON TABLE {schema}.treated TO postgres;
-GRANT ALL ON TABLE {schema}.treated TO admin;
-
 
 -- {schema}.donorlist source
 
@@ -222,9 +206,6 @@ AS SELECT donor.bloodtype,
 
 ALTER TABLE {schema}.donorlist OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.donorlist TO postgres;
-GRANT INSERT, SELECT, UPDATE ON TABLE {schema}.donorlist TO doctor;
-GRANT SELECT ON TABLE {schema}.donorlist TO patient;
-GRANT ALL ON TABLE {schema}.donorlist TO admin;
 
 
 
@@ -232,4 +213,37 @@ GRANT ALL ON TABLE {schema}.donorlist TO admin;
 -- Permissions
 
 GRANT ALL ON SCHEMA {schema} TO postgres;
-GRANT ALL ON SCHEMA {schema} TO public;
+
+
+-- Admin Permissions
+
+GRANT USAGE, CREATE ON SCHEMA {schema} TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}."Hospital" TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.affiliated TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.doctor TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.donates TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.donor TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.donorlist TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.operated TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.organ TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.patient TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.patient_needs TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.treated TO "admin";
+
+
+-- Doctor permissions
+
+GRANT SELECT ON TABLE {schema}."Hospital" TO doctor;
+GRANT SELECT ON TABLE {schema}.doctor TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.donor TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.donorlist TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.operated TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.organ TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.patient TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.patient_needs TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.treated TO doctor;
+
+
+-- Patient permissions
+
+GRANT SELECT ON TABLE {schema}.donorlist TO patient;
