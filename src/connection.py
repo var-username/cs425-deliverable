@@ -8,6 +8,7 @@ class Connection(object):
         self._conf = dict()
         for key in kwargs.keys():
             self._conf[key] = kwargs[key]
+        self._conf.pop('schema')
 
     def close(self):
         if self._conn is not None:
@@ -63,7 +64,7 @@ class Connection(object):
         command += ''' '''.join(args)
 
         self.execute(sql.SQL(command).format(
-            user=sql.Literal(user), role=sql.Literal(role)))
+            user=sql.Identifier(user), role=sql.Identifier(role)))
 
     def does_role_exist(self, role: str) -> bool:
         try:
@@ -87,6 +88,23 @@ class Connection(object):
 
     def forget_all(self):
         self._conf = dict()
+
+    def get_user_highest_role(self, user: str) -> str:
+        query = sql.SQL("SELECT pg_has_role({user}, {role}, 'USAGE')")
+
+        self.execute(query.format(user=sql.Literal(user), role=sql.Literal('admin')))
+        if(self._cur.fetchone()):
+            return 'admin'
+
+        self.execute(query.format(user=sql.Literal(user), role=sql.Literal('doctor')))
+        if(self._cur.fetchone()):
+            return 'doctor'
+
+        self.execute(query.format(user=sql.Literal(user), role=sql.Literal('patient')))
+        if(self._cur.fetchone()):
+            return 'patient'
+        
+        return 'unknown'
 
     def list_roles(self) -> list[str]:
         self.execute(sql.SQL("SELECT rolname FROM {}").format(sql.Identifier("pg_catalog", "pg_roles")))

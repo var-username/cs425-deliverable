@@ -40,7 +40,7 @@ if __name__ == '__main__':
             conf[arg] = None
 
     if args.verbose:
-        print("Verbose mode on.")
+        print("V) Verbose mode on.")
 
     # Get Creds and stuff
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         print("Please input the database host (defaults to UNIX socket if empty)")
         conf['host'] = input('> ')
     elif args.verbose:
-        print("Host already passed as {0}".format(args.host))
+        print("V) Host already passed as{0}".format(args.host))
 
     if conf['port'] is None:
         print("Please input the database port (defaults to 5432 if empty)")
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         if conf['port'].strip() == "":
             conf['port'] = 5432
     elif args.verbose:
-        print("Port already passed as {0}".format(args.port))
+        print("V) Port already passed as{0}".format(args.port))
 
     if conf['dbname'] is None:
         print("Please input the database name (defaults to \'Database1\' if empty)")
@@ -64,7 +64,7 @@ if __name__ == '__main__':
         if conf['dbname'].strip() == "":
             conf['dbname'] = 'Database1'
     elif args.verbose:
-        print("dbname already passed as {0}".format(args.dbname))
+        print("V) dbname already passed as{0}".format(args.dbname))
 
     if conf['user'] is None:
         print("Please input the username to authenticate with (defaults to your OS username if empty)")
@@ -72,29 +72,37 @@ if __name__ == '__main__':
         if conf['user'].strip() == "":
             conf['user'] = getpass.getuser()
     elif args.verbose:
-        print("User already passed as {0}".format(args.user))
+        print("V) User already passed as{0}".format(args.user))
 
     if conf['password'] is None:
         print(
             "Please input the password to authenticate with (your input will not be echoed)")
         conf['password'] = getpass.getpass('$ ')
     elif args.verbose:
-        print("Password already passed as {0}".format(args.password))
+        print("V) Password already passed as{0}".format(args.password))
 
     if args.verbose:
-        print("conf: ", conf)
+        print("V) conf: ", conf)
 
     # Make connection from creds
 
     conn = connection.Connection(**conf)
     if args.verbose:
-        print("Connection object created")
+        print("V) Connection object created")
 
     # Establish connection to db
 
     conn.connect()
     if args.verbose:
-        print("Connection established")
+        print("V) Connection established")
+
+    # Set user if it's empty
+
+    if conf['user'] == '':
+        conn.execute(sql.SQL("SELECT current_user;"))
+        conf['user'] = conn._cur.fetchone()[0]
+        if args.verbose:
+            print("V) Current user is " + conn['user'])
 
     # Check if admin, doctor, and patient exist
     # Create them if they don't
@@ -104,26 +112,32 @@ if __name__ == '__main__':
     patient_existed = True
 
     if not conn.does_role_exist('admin'):
+        print("V) Role 'admin' does not exist")
         conn.create_role('admin', ['CREATEROLE'])
+        print("V) Admin role created")
         admin_existed = False
 
     if not conn.does_role_exist('doctor'):
+        print("V) Role 'doctor' does not exist")
         conn.create_role('doctor', [])
+        print("V) Doctor role created")
         doctor_existed = False
 
     if not conn.does_role_exist('patient'):
+        print("V) Role 'patient' does not exist")
         conn.create_role('patient', [])
+        print("V) Patient role created")
         patient_existed = False
 
     # Select schema
 
     if conf['schema'] is None:
         print("\nPlease select your schema.\n\nAvailable schemas:")
-        print("(If an approprate schema does not exist input \'N/A\')")
+        print("(If an approprate schema does not exist input 'N/A')")
         print(conn.list_schemas())
-        conf['schema'] = input('> ').strip()
+        conf['schema'] = input('> ').strip().lower()
     elif args.verbose:
-        print("Schema already passed as {0}".format(args.schema))
+        print("V) Schema already passed as{0}".format(args.schema))
 
     # If the schema does not exist, prompt for name
 
@@ -134,28 +148,35 @@ if __name__ == '__main__':
         print("What should the schema be called?")
         conf['schema'] = input('> ').strip().lower()
         new_schema = True
+        print("V) Creating schema " + conf['schema'])
         conn.create_schema(conf['schema'], "admin")
+        print("V) Schema '" + conf['schema'] + "' created")
         conn.commit()
     else:
-        if conn.does_schema_exist(conf['schema']):
-            print("\nAvailable tables:")
-            print(conn.list_tables_in_schema(conf['schema']))
-        else:
+        if not conn.does_schema_exist(conf['schema']):
             print("Schema does not exist!")
             exit(1)
 
     # If the schema is new, generate structure from SCHEMA.sql in cwd
 
     if new_schema:
-        # TODO: Create Tables and stuff
         f = open("SCHEMA.sql")
+        if args.verbose:
+            print("V) Creating database from SCHEMA.sql")
         conn.execute(sql.SQL(f.read()).format(
             schema=sql.Identifier(conf['schema'].strip().lower())))
+        if args.verbose:
+            print("V) Database created")
         conn.commit()
     
+    # Welcome prompt
+
+    print("Welcome " + conf['user'] + ", your current role is " + conn.get_user_highest_role(conf["user"]))
+    print("\nWhat would you like to do? (Entering ? will show the help page)")
+
     # Keep showing menu until program close
 
     loop = True
 
     while(loop):
-        loop = menu(conf, conn)
+        loop = menu.main_menu(conf, conn)
