@@ -69,19 +69,29 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
 
                 elif (command[1].startswith('o')):
                     # Add new organ
-                    raise NotImplementedError
+                    if (command[1].startswith('?') or len(command) < 6):
+                        print("Usage: a o [doctorid] [organid] [donorid] [hospitalid] (organname) (life_hrs) (availibilitydate)")
+                    else:
+                        query = sql.SQL("insert into {table} ({}) values ({})").format(
+                            sql.SQL(", ").join(map(sql.Identifier, [
+                                'doctorid', 'organid', 'donorid', 'hospitalid', 'organname', 'life_hrs', 'availibiliydate'][:len(command)-2])),
+                            sql.SQL(", ").join(
+                                sql.Placeholder() * (len(command) - 2)),
+                            table=sql.Identifier(conf['schema'], "organ"))
+                        conn.execute(query, command[2:])
 
                 elif (command[1].startswith('p')):
                     # Add new patient
-                    # INSERT INTO patient (patientid, bloodtype, patientname, age, drughistory, allergies)
-                    #   VALUES ({}, {}, {}, {}, {}, {})
-                    query = sql.SQL("insert into {table} ({}) values ({})").format(
-                        sql.SQL(", ").join(map(sql.Identifier, [
-                            'patientid', 'bloodtype', 'patientname', 'age', 'drughistory', 'allergies'][:len(command)-2])),
-                        sql.SQL(", ").join(
-                            sql.Placeholder() * (len(command) - 2)),
-                        table=sql.Identifier(conf['schema'], "patient"))
-                    conn.execute(query, command[2:])
+                    if (command[1].startswith('?') or len(command) < 4):
+                        print("Usage: a p [id] [bloodtype] (name) (region) (age) (drug history) (allergies)")
+                    else:
+                        query = sql.SQL("insert into {table} ({}) values ({})").format(
+                            sql.SQL(", ").join(map(sql.Identifier, [
+                                'patientid', 'bloodtype', 'patientname', 'region', 'age', 'drughistory', 'allergies'][:len(command)-2])),
+                            sql.SQL(", ").join(
+                                sql.Placeholder() * (len(command) - 2)),
+                            table=sql.Identifier(conf['schema'], "patient"))
+                        conn.execute(query, command[2:])
 
             # Income report
             # > I

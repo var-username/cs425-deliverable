@@ -30,6 +30,7 @@ CREATE TABLE {schema}.doctor (
 	doctorname varchar(30) NULL,
 	specialization varchar(25) NULL,
 	fee numeric(12, 2) NULL,
+	region varchar(25) NULL,
 	CONSTRAINT doctor_pk PRIMARY KEY (doctorid),
 	CONSTRAINT fee_check CHECK ((fee >= (0)::numeric))
 );
@@ -80,6 +81,7 @@ CREATE TABLE {schema}.patient (
 	age numeric NULL,
 	drughistory varchar(30) NULL,
 	allergies varchar(40) NULL,
+	region varchar(25) NULL,
 	CONSTRAINT patient_pk PRIMARY KEY (patientid)
 );
 CREATE INDEX patient_bloodtype_idx ON {schema}.patient USING btree (bloodtype);
