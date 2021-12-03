@@ -73,7 +73,15 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
 
                 elif (command[1].startswith('p')):
                     # Add new patient
-                    raise NotImplementedError
+                    # INSERT INTO patient (patientid, bloodtype, patientname, age, drughistory, allergies)
+                    #   VALUES ({}, {}, {}, {}, {}, {})
+                    query = sql.SQL("insert into {table} ({}) values ({})").format(
+                        sql.SQL(", ").join(map(sql.Identifier, [
+                            'patientid', 'bloodtype', 'patientname', 'age', 'drughistory', 'allergies'][:len(command)-2])),
+                        sql.SQL(", ").join(
+                            sql.Placeholder() * (len(command) - 2)),
+                        table=sql.Identifier(conf['schema'], "patient"))
+                    conn.execute(query, command[2:])
 
             # Income report
             # > I
@@ -92,7 +100,7 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
             # Search
             # > s
             elif command[0].startswith('s'):
-                searched = False
+
                 if (command[1].startswith('?') or len(command) < 4):
                     print("Usage: s [b, o] [type] [region]")
 
@@ -104,18 +112,26 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                         query = sql.SQL("SELECT donorid, donorname FROM {table} WHERE bloodtype = {bloodtype} and organname = 'blood' and lastdonation >= {curdate} and region = {region}").format(
                             table=sql.Identifier(conf['schema'], 'donor'), bloodtype=sql.Literal(command[2]), region=sql.Literal(command[3]), curdate=sql.Literal(targetdate.isoformat()))
                         conn.execute(query)
-                        searched = True
+                        print("Patients: (id, name)")
+                        for record in conn._cur:
+                            print(record)
+
                 elif command[1].startswith('o'):
                     if (command[1].startswith('?') or len(command) < 4):
                         print("Usage: s o [organname] [region]")
                     else:
-                        searched = True
-                        pass
-
-                if searched:
-                    print("Patients: (id, name)")
-                    for record in conn._cur:
-                        print(record)
+                        query = sql.SQL('''
+                            with tempTable as (select donorid, donor.region, organname, doctorname 
+                            from {donort} inner join {doctort} on organname = doctor.specialization
+                            where {donort}.region = {doctort}.region)
+                            select donorid, organname, doctorname from tempTable
+                            where organname = {organ} and region = {region}
+                        ''').format(donort=sql.Identifier(conf['schema'], 'donor'), doctort=sql.Identifier(conf['schema'], 'doctor'),
+                                    organname=sql.Literal(command[2]), region=sql.Literal(command[3]))
+                        conn.execute(query)
+                        print("Donors: (id, region, organ, local doctor)")
+                        for record in conn._cur:
+                            print(record)
 
         # NOTE: pylance claims this isn't allowed but it seems to work when I run it
         except p2err.InsufficientPrivilege as e:
