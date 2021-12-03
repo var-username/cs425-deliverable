@@ -93,15 +93,19 @@ class Connection(object):
         query = sql.SQL("SELECT pg_has_role({user}, {role}, 'USAGE')")
 
         self.execute(query.format(user=sql.Literal(user), role=sql.Literal('admin')))
-        if(self._cur.fetchone()):
+        
+        result = self._cur.fetchone()
+        if(result[0]):
             return 'admin'
 
         self.execute(query.format(user=sql.Literal(user), role=sql.Literal('doctor')))
-        if(self._cur.fetchone()):
+        result = self._cur.fetchone()
+        if(result[0]):
             return 'doctor'
 
         self.execute(query.format(user=sql.Literal(user), role=sql.Literal('patient')))
-        if(self._cur.fetchone()):
+        result = self._cur.fetchone()
+        if(result[0]):
             return 'patient'
         
         return 'unknown'
