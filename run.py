@@ -180,3 +180,5 @@ if __name__ == '__main__':
 
     while(loop):
         loop = menu.main_menu(conf, conn)
+
+    conn.commit()
