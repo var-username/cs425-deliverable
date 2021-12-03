@@ -65,12 +65,25 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
 
                 elif (command[1].startswith('d')):
                     # Add new donor
-                    raise NotImplementedError
+                    if (command[1].startswith('?') or len(command) < 4):
+                        print(
+                            '''Usage: a d [donorid] [donorname] (organname) (bloodtype) (region) (age)\n\t
+                            (lastdonation) (phone) (email) (chronicaldisease) (druguse) (lasttattoo) (medicalhistory)
+                            ''')
+                    else:
+                        query = sql.SQL("insert into {table} ({}) values ({})").format(
+                            sql.SQL(", ").join(map(sql.Identifier, [
+                                'donorid', 'donorname', 'organname', 'bloodtype', 'region', 'age', 'lastdonation', 'phone', 'email', 'chronicaldisease', 'druguse', 'lasttattoo', 'medicalhistory'][:len(command)-2])),
+                            sql.SQL(", ").join(
+                                sql.Placeholder() * (len(command) - 2)),
+                            table=sql.Identifier(conf['schema'], "organ"))
+                        conn.execute(query, command[2:])
 
                 elif (command[1].startswith('o')):
                     # Add new organ
                     if (command[1].startswith('?') or len(command) < 6):
-                        print("Usage: a o [doctorid] [organid] [donorid] [hospitalid] (organname) (life_hrs) (availibilitydate)")
+                        print(
+                            "Usage: a o [doctorid] [organid] [donorid] [hospitalid] (organname) (life_hrs) (availibilitydate)")
                     else:
                         query = sql.SQL("insert into {table} ({}) values ({})").format(
                             sql.SQL(", ").join(map(sql.Identifier, [
@@ -83,7 +96,8 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                 elif (command[1].startswith('p')):
                     # Add new patient
                     if (command[1].startswith('?') or len(command) < 4):
-                        print("Usage: a p [id] [bloodtype] (name) (region) (age) (drug history) (allergies)")
+                        print(
+                            "Usage: a p [id] [bloodtype] (name) (region) (age) (drug history) (allergies)")
                     else:
                         query = sql.SQL("insert into {table} ({}) values ({})").format(
                             sql.SQL(", ").join(map(sql.Identifier, [
@@ -95,7 +109,7 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
 
             # Income report
             # > I
-            elif command[0].startswith('I'):
+            elif command[0].startswith('i'):
                 query = sql.SQL(
                     '''
                     SELECT hospitalid, hospitalName, region, sum(hospitalizationcost)
@@ -104,6 +118,29 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                     ''').format(table1=sql.Identifier(conf['schema'], 'Hospital'), table2=sql.Identifier(conf['schema'], 'treated'))
                 conn.execute(query)
                 print('Hospitals: (id, name, region, income)')
+                for record in conn._cur:
+                    print(record)
+
+            # Organ match list
+            elif command[0].startswith('m'):
+                query = sql.SQL('''
+                    with patientneeds as (select patientid, region, bloodtype, patient_needs.need
+                        from {patientt} natural join {patientneedst})
+                    SELECT D.donorid, patientid, o.availibilitydate, o.organname, o.organid FROM 
+                        {donort} D, patientneeds P, {organt} O WHERE
+                    D.organname = P.need and D.region = P.region
+                    AND (P.bloodtype = 'AB' OR D.bloodtype = 'O' OR P.bloodtype = D.bloodtype)
+                    AND O.life_hrs > 0;
+                ''').format(
+                    patientt=sql.Identifier(conf['schema'], 'patient'),
+                    patientneedst=sql.Identifier(
+                        conf['schema'], 'patient_needs'),
+                    donort=sql.Identifier(conf['schema'], 'donor'),
+                    organt=sql.Identifier(conf['schema'], 'organ')
+                )
+                conn.execute(query)
+                print(
+                    "All matching donations: (donorid, patientid, availdate, organ, organid)")
                 for record in conn._cur:
                     print(record)
 
@@ -166,7 +203,8 @@ def print_help(role: str):
         print("  (d)onor")
         print("  (o)rgan")
         print("  (p)atient")
-        print("(I)ncome report")
+        print("(i)ncome report")
+        print("organ (m)atch list")
         print("")
         pass
     if(role == 'patient' or role == 'doctor' or role == 'admin'):

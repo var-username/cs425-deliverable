@@ -196,17 +196,33 @@ CREATE TABLE {schema}.treated (
 
 ALTER TABLE {schema}.treated OWNER TO postgres;
 
--- {schema}.donorlist source
 
-CREATE OR REPLACE VIEW {schema}.donorlist
+-- {schema}.blooddonorlist source
+
+CREATE OR REPLACE VIEW {schema}.organdonorlist
 AS SELECT donor.bloodtype,
     donor.organname,
     donor.donorid
-   FROM {schema}.donor;
+   FROM project_1.donor;
 
 -- Permissions
 
-ALTER TABLE {schema}.donorlist OWNER TO postgres;
+ALTER TABLE {schema}.organdonorlist OWNER TO postgres;
+GRANT ALL ON TABLE {schema}.organdonorlist TO postgres;
+
+
+-- {schema}.blooddonorlist source
+
+CREATE OR REPLACE VIEW {schema}.blooddonorlist
+AS SELECT donor.bloodtype,
+    donor.age,
+    donor.donorid,
+    donor.lastdonation
+   FROM {schema}.donor where organname = 'blood';
+
+-- Permissions
+
+ALTER TABLE {schema}.blooddonorlist OWNER TO postgres;
 GRANT ALL ON TABLE {schema}.donorlist TO postgres;
 
 
@@ -225,7 +241,8 @@ GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {sc
 GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.doctor TO "admin";
 GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.donates TO "admin";
 GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.donor TO "admin";
-GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.donorlist TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.blooddonorlist TO "admin";
+GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.organdonorlist TO "admin";
 GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.operated TO "admin";
 GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.organ TO "admin";
 GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {schema}.patient TO "admin";
@@ -238,7 +255,8 @@ GRANT INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON TABLE {sc
 GRANT SELECT ON TABLE {schema}."Hospital" TO doctor;
 GRANT SELECT ON TABLE {schema}.doctor TO doctor;
 GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.donor TO doctor;
-GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.donorlist TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.blooddonorlist TO doctor;
+GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.organdonorlist TO doctor;
 GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.operated TO doctor;
 GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.organ TO doctor;
 GRANT INSERT, SELECT, UPDATE, DELETE ON TABLE {schema}.patient TO doctor;
