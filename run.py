@@ -102,7 +102,7 @@ if __name__ == '__main__':
         conn.execute(sql.SQL("SELECT current_user;"))
         conf['user'] = conn._cur.fetchone()[0]
         if args.verbose:
-            print("V) Current user is " + conn['user'])
+            print("V) Current user is " + conf['user'])
 
     # Check if admin, doctor, and patient exist
     # Create them if they don't
