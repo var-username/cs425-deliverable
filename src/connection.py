@@ -80,11 +80,11 @@ class Connection(object):
         except ValueError as e:
             return False
 
-    def execute(self, query):
+    def execute(self, query, vars=...):
         if self._cur is None:
             raise Exception()
         else:
-            return self._cur.execute(query)
+            return self._cur.execute(query, vars)
 
     def forget_all(self):
         self._conf = dict()
