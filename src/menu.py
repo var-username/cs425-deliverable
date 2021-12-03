@@ -11,12 +11,19 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
     except KeyboardInterrupt:
         exit(0)
 
+    # Print main help message
+    # > ?
     if command[0].startswith('?'):
         print_help(role)
 
+    # Quit the program
+    # > q
     elif command[0].startswith('q'):
+        conn.commit()
         return False
 
+    # Add new item
+    # > a [?, d, o, p]
     elif command[0].startswith('a'):
 
         if (command[1].startswith('?')):
@@ -34,6 +41,8 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
             # Add new patient
             raise NotImplementedError
 
+    # Create something (admin)
+    # > c [?, u [name group (args)] ]
     elif command[0].startswith('c'):
 
         if (command[1].startswith('?') or len(command) < 2):
@@ -46,9 +55,15 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                 conn.create_user(*command[2:])
                 conn.commit()
 
+    # Commit anything that hasn't been commited yet
+    # In theory this shouldn't need to be used
+    # > C
     elif command[0].startswith('C'):
         conn.commit()
 
+    # Revert anything that hasn't been commited yet
+    # In theory this shouldn't need to be used
+    # > R
     elif command[0].startswith('R'):
         conn.rollback()
 
