@@ -78,7 +78,16 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
             # Income report
             # > I
             elif command[0].startswith('I'):
-                raise NotImplementedError
+                query = sql.SQL(
+                    '''
+                    SELECT hospitalid, hospitalName, region, sum(hospitalizationcost)
+                    FROM {table1} natural join {table2}
+                    group by hospitalid;
+                    ''').format(table1=sql.Identifier(conf['schema'], 'Hospital'), table2=sql.Identifier(conf['schema'], 'treated'))
+                conn.execute(query)
+                print('Hospitals: (id, name, region, income)')
+                for record in conn._cur:
+                    print(record)
 
             # Search
             # > s
@@ -91,7 +100,7 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                     if (command[2].startswith('?') or len(command) < 4):
                         print("Usage: s b [bloodtype] [region]")
                     else:
-                        targetdate = datetime.date.today() - datetime.timedelta(days = 30)
+                        targetdate = datetime.date.today() - datetime.timedelta(days=30)
                         query = sql.SQL("SELECT donorid, donorname FROM {table} WHERE bloodtype = {bloodtype} and organname = 'blood' and lastdonation >= {curdate} and region = {region}").format(
                             table=sql.Identifier(conf['schema'], 'donor'), bloodtype=sql.Literal(command[2]), region=sql.Literal(command[3]), curdate=sql.Literal(targetdate.isoformat()))
                         conn.execute(query)
