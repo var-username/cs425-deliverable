@@ -76,7 +76,7 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                                 'donorid', 'donorname', 'organname', 'bloodtype', 'region', 'age', 'lastdonation', 'phone', 'email', 'chronicaldisease', 'druguse', 'lasttattoo', 'medicalhistory'][:len(command)-2])),
                             sql.SQL(", ").join(
                                 sql.Placeholder() * (len(command) - 2)),
-                            table=sql.Identifier(conf['schema'], "organ"))
+                            table=sql.Identifier(conf['schema'], "donor"))
                         conn.execute(query, command[2:])
 
                 elif (command[1].startswith('o')):
@@ -156,7 +156,7 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                         print("Usage: s b [bloodtype] [region]")
                     else:
                         targetdate = datetime.date.today() - datetime.timedelta(days=30)
-                        query = sql.SQL("SELECT donorid, donorname FROM {table} WHERE bloodtype = {bloodtype} and organname = 'blood' and lastdonation >= {curdate} and region = {region}").format(
+                        query = sql.SQL("SELECT donorid, donorname FROM {table} WHERE bloodtype = {bloodtype} and organname = 'blood' and lastdonation <= {curdate} and region = {region}").format(
                             table=sql.Identifier(conf['schema'], 'donor'), bloodtype=sql.Literal(command[2]), region=sql.Literal(command[3]), curdate=sql.Literal(targetdate.isoformat()))
                         conn.execute(query)
                         print("Patients: (id, name)")
@@ -167,14 +167,13 @@ def main_menu(conf: dict, conn: connection.Connection) -> bool:
                     if (command[1].startswith('?') or len(command) < 4):
                         print("Usage: s o [organname] [region]")
                     else:
-                        query = sql.SQL('''
-                            with tempTable as (select donorid, donor.region, organname, doctorname 
+                        query = sql.SQL('''with tempTable as (select donorid, donor.region, organname, doctorname 
                             from {donort} inner join {doctort} on organname = doctor.specialization
                             where {donort}.region = {doctort}.region)
                             select donorid, organname, doctorname from tempTable
                             where organname = {organ} and region = {region}
                         ''').format(donort=sql.Identifier(conf['schema'], 'donor'), doctort=sql.Identifier(conf['schema'], 'doctor'),
-                                    organname=sql.Literal(command[2]), region=sql.Literal(command[3]))
+                                    organ=sql.Literal(command[2]), region=sql.Literal(command[3]))
                         conn.execute(query)
                         print("Donors: (id, region, organ, local doctor)")
                         for record in conn._cur:
